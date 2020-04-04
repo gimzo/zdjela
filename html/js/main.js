@@ -6,6 +6,7 @@ var timer;
 var curT;
 var igraju;
 function joinRoom() {
+	$("#status").html("joining...");
 	var ime=$( "#ime" ).val();
 	if (ime == "") return;
 	client.joinOrCreate("zdjela_room", ime).then(room => {
@@ -25,6 +26,7 @@ function joinRoom() {
 
 		}).catch(e => {
 		console.log("JOIN ERROR", e);
+		$("#status").html("error");
 	});
 }
 
@@ -39,6 +41,7 @@ function onStateChange (room, state) {
 }
 function onError (room) {
 	console.log(client.id, "couldn't join", room.name);
+	$("#status").html("error");
 }
 function onLeave (room) {
 	console.log(client.id, "left", room.name);
@@ -149,6 +152,8 @@ function stateMachine(state) {
         $("#jitsi").show();
 		$("#scoring").show();
 		$("#timing").show();
+		$(".running").show();
+		$(".finished").hide();
 		$("#btnReady").html("Ready");
 		$("#status").html("Ready za start");
 		clearInterval(timer);
@@ -165,6 +170,8 @@ function stateMachine(state) {
 		case 3:
 		clearInterval(timer);
 		showScores();
+		$(".running").hide();
+		$(".finished").show();
 		$("#btnReady").show();
 		$("#status").html("Kraj");
 		$("#btnReady").html("Again");
