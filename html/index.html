@@ -1,0 +1,74 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title>Zdjela</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/main.css">
+
+  <meta name="theme-color" content="#fafafa">
+</head>
+
+<body>
+  <!--[if IE]>
+    <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+  <![endif]-->
+
+  <!-- Add your site or application content here -->
+  <div id="login" class="modal">
+    <div id="loginForm" class="modal_content">
+	    <label>Ime:</label>
+	    <input type="text" id="ime" autofocus><br>
+	    <button type="button" onclick="joinRoom()">Enter</button>
+    </div>
+  </div>
+  <div id="jitsi"></div>
+  <div id="info">
+  	<div id="players"><h3>Igraju</h3><p id="player_list">red1<br>red2<br>red3<br>red4<br>red5<br>red6</p></div>
+  	<div id="scoring">
+		<p>U zdjeli: <span id="rem">34</span></p>
+		<p>Zadnji točan:</p><span id="last">Ernest Hemiingwaay</span>
+		<p id="finals">Rezultati:<br>red1<br>red2<br>red3<br>red4<br>red5<br>red6</p>
+  	</div>
+  	<div id="timing">60</div>
+  </div>
+  <div id="pisanje">
+	<h3>Papirići</h3>
+	<form id="papirici" autocomplete="off" action="javascript:papersPlease();">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="text" name="pa">
+	<input type="submit" value="Done">
+	</form>
+  </div>
+  <div id="question">
+    <h3 id="txtq">ovdje je neki odgovor</h3>
+	<button type="button" onclick="sayReady()" id="btnReady">Ready</button>	
+  </div>
+  <div id="status">not connected</div>
+  <script src="js/vendor/modernizr-3.8.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src='https://meet.jit.si/external_api.js'></script>
+  <script src="js/vendor/colyseus.js"></script>
+  <script>window.jQuery || document.write('<script src="js/vendor/jquery-3.4.1.min.js"><\/script>')</script>
+  <script src="js/plugins.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+
+</html>
