@@ -48,6 +48,8 @@ function onLeave (room) {
 		$("#login").show();
 		$("#players").hide();
 		$("#pisanje").hide();
+		$("#scoring").hide();
+		$("#timing").hide();
 		$("#question").hide();
 		$("#jitsi").hide();
 		$("#status").html("disconnected");
@@ -156,6 +158,7 @@ function stateMachine(state) {
 		$(".finished").hide();
 		$("#btnReady").html("Ready");
 		$("#status").html("Ready za start");
+		if (Room.state.cpt != Room.sessionId) $("#btnReady").hide();
 		clearInterval(timer);
 		$("#txtq").html(igraju);
 		break;
@@ -165,9 +168,10 @@ function stateMachine(state) {
 		console.log(Room.state.cpt, Room.sessionId);
 		if (Room.state.cpt != Room.sessionId) $("#btnReady").hide();
 		curT=Room.state.duration;
-		timer=setInterval(function(){ $("#timing").html(curT);curT--;},1000);
+		timer=setInterval(countdown,1000);
 		break;
 		case 3:
+		$("#ending")[0].play();
 		clearInterval(timer);
 		showScores();
 		$(".running").hide();
@@ -181,6 +185,15 @@ function stateMachine(state) {
 }
 
 function setScore() {
+}
+function countdown() {
+	if (curT==0) {
+		console.log("nula");
+		$("#timeout")[0].play();
+	} else {
+		curT--;
+	}
+	$("#timing").html(curT);
 }
 
 function sayReady() {

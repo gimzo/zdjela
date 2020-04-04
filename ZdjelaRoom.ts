@@ -117,8 +117,8 @@ console.log(client.sessionId, "sent", message);
 		  break;
 		  case 2: //running
 		  	if (noviState==1){
-				this.state.aktivni++;
-				if (this.state.aktivni >= this.state.poredak.length) this.state.aktivni=0;
+				//this.state.aktivni++;
+				this.advanceAktivni(false);
 				this.state.stanje=1;
 			}
 			if (noviState==3){
@@ -154,6 +154,8 @@ console.log(client.sessionId, "sent", message);
   genParovi() {
 	  console.log("generating pairs");
 	  this.state.poredak.length=0;
+	  //this.state.aktivni=0;
+	  this.advanceAktivni(true);
 	  var tplay = new Array();
 	  for (let name in this.state.players)
 	  {
@@ -176,11 +178,11 @@ console.log(client.sessionId, "sent", message);
 		  this.state.players[left[i]].partner=tplay[i];
 		  this.state.players[tplay[i]].partner=left[i];
 	  }
+	  this.setCpt();
   }
 
   otvoriPapiric() {
 	  var ak=this.state.poredak[this.state.aktivni];
-	  this.state.cpt=ak;
 	  var client=this.klijenti[ak];
 	  var papiric=this.gPapiri.slice(-1)[0];
 	  this.send(client,papiric);
@@ -196,8 +198,22 @@ console.log(client.sessionId, "sent", message);
 	  console.log("round reset");
 	  for (let id in this.state.players) {const player: Player = this.state.players[id]; player.stanje=0; player.pogodjeni=0; player.partner=null};
 	  this.state.zadnji="";
-	  this.state.aktivni=0;
+	  //this.state.aktivni=0;
+	  advanceAktivni(true);
 	  this.state.turn=0;
 	  this.clock.start();
+  }
+
+  setCpt() {
+	  var ak=this.state.poredak[this.state.aktivni];
+	  this.state.cpt=ak;
+	  console.log("cpt is",this.state.cpt);
+  }
+
+  advanceAktivni(reset) {
+      this.state.aktivni++;
+	  if (this.state.aktivni >= this.state.poredak.length) this.state.aktivni=0;
+	  if (reset) this.state.aktivni=0;
+	  this.setCpt();
   }
 }
