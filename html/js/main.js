@@ -6,7 +6,7 @@ var timer;
 var curT;
 var igraju;
 function joinRoom() {
-	$("#status").html("joining...");
+	updateStatus("joining...","yellow");
 	var ime=$( "#ime" ).val();
 	if (ime == "") return;
 	client.joinOrCreate("zdjela_room", ime).then(room => {
@@ -26,7 +26,7 @@ function joinRoom() {
 
 		}).catch(e => {
 		console.log("JOIN ERROR", e);
-		$("#status").html("error");
+		updateStatus("error","red");
 	});
 }
 
@@ -41,7 +41,7 @@ function onStateChange (room, state) {
 }
 function onError (room) {
 	console.log(client.id, "couldn't join", room.name);
-	$("#status").html("error");
+	updateStatus("error","red");
 }
 function onLeave (room) {
 	console.log(client.id, "left", room.name);
@@ -52,7 +52,7 @@ function onLeave (room) {
 		$("#timing").hide();
 		$("#question").hide();
 		$("#jitsi").hide();
-		$("#status").html("disconnected");
+		updateStatus("disconnected","red");
 }
 
 function updatePlayers(stanje) {
@@ -79,7 +79,6 @@ function playersParovi() {
 	$("#player_list").append("<ul>");
 	poredak=Room.state.poredak;
 	players=Room.state.players;
-	console.log(players, poredak);
 	poredak.forEach((x,index) => {
 		var bold=(index==Room.state.aktivni);
 		$("#player_list").append("<li " + (bold ? "class='curr'":"") + ">" + players[x].ime + " ⇨ " + players[players[x].partner].ime + "</li>");
@@ -97,6 +96,7 @@ function playersReady() {
 	$("#player_list").append("</ul>");
 	if (players[Room.sessionId].stanje==1){
 		disableForma(true);
+		updateStatus("Waiting for other players...");
 	}
 }
 
@@ -143,7 +143,8 @@ function stateMachine(state) {
 		clearForma();
 		disableForma(false);
 		$("#finals").html("");
-		$("#status").html("Ispunjavanje papirića");
+		resetCountdown();
+		updateStatus("Ispunjavanje papirića");
 		break;
 		case 1:
 		$("#login").hide();
@@ -157,17 +158,16 @@ function stateMachine(state) {
 		$(".running").show();
 		$(".finished").hide();
 		$("#btnReady").html("Ready");
-		$("#status").html("Ready za start");
-		if (Room.state.cpt != Room.sessionId) $("#btnReady").hide();
+		updateStatus("Ready za start");
+		if (Room.state.cpt != Room.sessionId) {$("#btnReady").hide(); updateStatus("Waiting for turn");}
 		clearInterval(timer);
 		$("#txtq").html(igraju);
 		break;
 		case 2:
-		$("#status").html("In progress");
+		updateStatus("In progress");
 		$("#btnReady").html("Točno");
-		console.log(Room.state.cpt, Room.sessionId);
-		if (Room.state.cpt != Room.sessionId) $("#btnReady").hide();
-		curT=Room.state.duration;
+		if (Room.state.cpt != Room.sessionId) {$("#btnReady").hide();}
+		resetCountdown();
 		timer=setInterval(countdown,1000);
 		break;
 		case 3:
@@ -177,18 +177,25 @@ function stateMachine(state) {
 		$(".running").hide();
 		$(".finished").show();
 		$("#btnReady").show();
-		$("#status").html("Kraj");
+		updateStatus("Kraj");
 		$("#btnReady").html("Again");
 		break;
 	}
 	lastState=state;
 }
 
-function setScore() {
+function updateStatus(message, colour="lightgreen") {
+	$("#status").html(message);
+	$("#status").css("background-color",colour);
+}
+
+function resetCountdown() {
+	curT=Room.state.duration;
+	$("#timing").html(curT);
 }
 function countdown() {
 	if (curT==0) {
-		console.log("nula");
+		console.log("outatime");
 		$("#timeout")[0].play();
 	} else {
 		curT--;
@@ -197,7 +204,7 @@ function countdown() {
 }
 
 function sayReady() {
-	console.log("saying ready/1");
+	console.log("saying ready");
 	Room.send({cmd:1});
 }
 
@@ -207,8 +214,7 @@ function showScores() {
 	var poredak=Room.state.poredak;
 	$("#finals").html("<b>Rezultati</b><br>");
 	poredak.forEach((x,index) => {
-		$("#finals").append(players[x].ime + " i " + players[players[x].partner].ime + ": " + (players[x].pogodjeni+players[players[x].partner].pogodjeni) + "<br>");
+		if (index<poredak.length/2)	$("#finals").append(players[x].ime + " i " + players[players[x].partner].ime + ": " + (players[x].pogodjeni+players[players[x].partner].pogodjeni) + "<br>");
 	});
-
-
+	$("#finals").show();
 }

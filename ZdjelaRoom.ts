@@ -199,18 +199,20 @@ console.log(client.sessionId, "sent", message);
 	  for (let id in this.state.players) {const player: Player = this.state.players[id]; player.stanje=0; player.pogodjeni=0; player.partner=null};
 	  this.state.zadnji="";
 	  //this.state.aktivni=0;
-	  advanceAktivni(true);
+	  this.advanceAktivni(true);
 	  this.state.turn=0;
 	  this.clock.start();
   }
 
   setCpt() {
+	  console.log("setting cpt");
 	  var ak=this.state.poredak[this.state.aktivni];
 	  this.state.cpt=ak;
 	  console.log("cpt is",this.state.cpt);
   }
 
-  advanceAktivni(reset) {
+  advanceAktivni(reset:boolean) {
+	  console.log("advancing aktivni");
       this.state.aktivni++;
 	  if (this.state.aktivni >= this.state.poredak.length) this.state.aktivni=0;
 	  if (reset) this.state.aktivni=0;
