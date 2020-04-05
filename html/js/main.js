@@ -5,9 +5,11 @@ var lastState;
 var timer;
 var curT;
 var igraju;
+var ingame;
 function joinRoom() {
 	updateStatus("joining...","yellow");
 	var ime=$( "#ime" ).val();
+	ingame=false;
 	if (ime == "") return;
 	client.joinOrCreate("zdjela_room", ime).then(room => {
 		console.log(room.sessionId, "joined", room.name);
@@ -16,18 +18,23 @@ function joinRoom() {
 		room.onError(() => onError(room));
 		room.onLeave(() => onLeave(room));
 		Room=room;
-//		jitsi= new JitsiMeetExternalAPI('meet.jit.si', {roomName: 'zdjela_'+room.id, width: '100%', height: '100%', parentNode: document.querySelector('#jitsi')})
-//		jitsi.executeCommand('displayName', ime);
+		jitsi= new JitsiMeetExternalAPI('meet.jit.si', {roomName: 'zdjela_'+room.id, width: '100%', height: '100%', parentNode: document.querySelector('#jitsi')})
+		jitsi.executeCommand('displayName', ime);
 		room.onStateChange.once((state) => { //prvi state
 			updatePlayers();
 			stateMachine(state.stanje);
+		    room.state.sysmsg.onChange = (changes) => onSysmsg(changes);
 		
 		});
-
 		}).catch(e => {
 		console.log("JOIN ERROR", e);
 		updateStatus("error","red");
 	});
+}
+
+function onSysmsg (state) {
+	console.log("sysmsg received",state.sysmsg);
+	updateStatus(state.sysmsg.message,"magenta");
 }
 
 function onMessage(room, message) {
@@ -38,23 +45,55 @@ function onStateChange (room, state) {
 	updatePlayers(state.stanje);
 	stateMachine(state.stanje);
 	zadnji(state);
+	console.log("state changed");
 }
 function onError (room) {
-	console.log(client.id, "couldn't join", room.name);
+	console.log(client.id, "error", room.name);
 	updateStatus("error","red");
 }
+
 function onLeave (room) {
-	console.log(client.id, "left", room.name);
-		$("#login").show();
-		$("#players").hide();
-		$("#pisanje").hide();
-		$("#scoring").hide();
-		$("#timing").hide();
-		$("#question").hide();
-		$("#jitsi").hide();
-		updateStatus("disconnected","red");
+	console.log("disconnected");
+	updateStatus("disconnected","red");
+	if (ingame) {console.log("trying to reconnect");
+		Reconnect();
+	}else {
+		left(room);
+	}
 }
 
+function Reconnect() {
+	console.log("reconnect attempt");
+	var clientid=Room.sessionId;
+	var roomid=Room.id;
+	var room=client.reconnect(roomid, clientid).then(room => {
+		console.log("Reconnected");
+		updateStatus("reconnected");
+        room.onStateChange((state) => onStateChange(room, state));
+        room.onMessage((message) => onMessage(room, message));
+        room.onError(() => onError(room));
+        room.onLeave(() => onLeave(room));
+        Room=room;
+		room.onStateChange.once((state) => { //prvi state
+			updatePlayers();
+			stateMachine(state.stanje);
+			room.state.sysmsg.onChange = (changes) => onSysmsg(changes);
+		});
+	}).catch(e => { console.log("unable to reconnect");left(Room);});
+}
+
+function left(room) {
+	console.log(client.id, "left", room.name);
+	resetCountdown();
+	$("#login").show();
+	$("#players").hide();
+	$("#pisanje").hide();
+	$("#scoring").hide();
+	$("#timing").hide();
+	$("#question").hide();
+	$("#jitsi").hide();
+	updateStatus("not connected");
+}
 function updatePlayers(stanje) {
 	switch (stanje){
 		case 0:
@@ -69,8 +108,9 @@ function updatePlayers(stanje) {
 
 function zadnji(state) {
 	$("#last").html(state.zadnji);
+	$("#turn").html(state.turn);
+	$("#time").html(state.time);
 	$("#rem").html(state.preostali);
-	$("#tot").html(state.ukupno);
 }
 
 function playersParovi() {
@@ -132,38 +172,23 @@ function stateMachine(state) {
 	console.log("State changing from",lastState,"to",state);
 	switch (state) {
 		case 0:
-		$("#txtq").html("");
-		$("#login").hide();
-		$("#players").show();
-		$("#pisanje").show();
-		$("#question").hide();
-		$("#jitsi").show();
-		$("#scoring").hide();
-		$("#timing").hide();
-		clearForma();
-		disableForma(false);
-		$("#finals").html("");
+		ingame=false;
+		displayPapirici();
 		resetCountdown();
 		updateStatus("Ispunjavanje papirića");
 		break;
 		case 1:
-		$("#login").hide();
-		$("#btnReady").show();
-        $("#players").show();
-        $("#pisanje").hide();
-        $("#question").show();
-        $("#jitsi").show();
-		$("#scoring").show();
-		$("#timing").show();
-		$(".running").show();
-		$(".finished").hide();
+		ingame=true;
+		displayGame();
 		$("#btnReady").html("Ready");
 		updateStatus("Ready za start");
 		if (Room.state.cpt != Room.sessionId) {$("#btnReady").hide(); updateStatus("Waiting for turn");}
-		clearInterval(timer);
+		resetCountdown();
 		$("#txtq").html(igraju);
 		break;
 		case 2:
+		ingame=true;
+		displayGame();
 		updateStatus("In progress");
 		$("#btnReady").html("Točno");
 		if (Room.state.cpt != Room.sessionId) {$("#btnReady").hide();}
@@ -183,6 +208,32 @@ function stateMachine(state) {
 	}
 	lastState=state;
 }
+function displayPapirici() {
+	    $("#txtq").html("");
+		$("#login").hide();
+		$("#players").show();
+		$("#pisanje").show();
+		$("#question").hide();
+		$("#jitsi").show();
+		$("#scoring").hide();
+		$("#timing").hide();
+		clearForma();
+		disableForma(false);
+		$("#finals").html("");
+}
+
+function displayGame() {
+		$("#login").hide();
+		$("#btnReady").show();
+        $("#players").show();
+        $("#pisanje").hide();
+        $("#question").show();
+        $("#jitsi").show();
+		$("#scoring").show();
+		$("#timing").show();
+		$(".running").show();
+		$(".finished").hide();
+}
 
 function updateStatus(message, colour="lightgreen") {
 	$("#status").html(message);
@@ -190,6 +241,7 @@ function updateStatus(message, colour="lightgreen") {
 }
 
 function resetCountdown() {
+	clearInterval(timer);
 	curT=Room.state.duration;
 	$("#timing").html(curT);
 }
@@ -214,7 +266,7 @@ function showScores() {
 	var poredak=Room.state.poredak;
 	$("#finals").html("<b>Rezultati</b><br>");
 	poredak.forEach((x,index) => {
-		if (index<poredak.length/2)	$("#finals").append(players[x].ime + " i " + players[players[x].partner].ime + ": " + (players[x].pogodjeni+players[players[x].partner].pogodjeni) + "<br>");
+	try {	if (index<poredak.length/2)	$("#finals").append(players[x].ime + " i " + players[players[x].partner].ime + ": " + (players[x].pogodjeni+players[players[x].partner].pogodjeni) + "<br>"); } catch (err) {}
 	});
 	$("#finals").show();
 }

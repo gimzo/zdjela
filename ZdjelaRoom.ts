@@ -9,6 +9,10 @@ class Player extends Schema {
   @type("number") pogodjeni: number=0;
   @type("number") stanje: number=0; // 0 - ispunjavanje papirica, 1 - ready za start runde
 }
+class SysMsg extends Schema {
+	@type("string") message: string;
+	@type("number") severity: number; // 0 - warning, 1 - error
+}
 class State extends Schema {
 	@type("number") stanje: number; // 0 - ispunjavanje papirica, 1 - start runde, 2 - running, 3 - finished
 	@type("number") turn: number;
@@ -20,6 +24,8 @@ class State extends Schema {
 	@type("number") aktivni: number;
 	@type("string") zadnji: string;
 	@type("string") cpt: string;
+	@type(SysMsg) sysmsg: SysMsg;
+	@type("number") time: number;
 }
 
 
@@ -32,6 +38,7 @@ export class ZdjelaRoom extends Room<State> {
 	  this.setState(new State());
 	  this.state.duration=DURATION;
 	  this.state.stanje=0;
+	  this.state.sysmsg= new SysMsg();
 	  this.gPapiri = new Array<string>();
 	  this.resetRound();
   }
@@ -85,10 +92,25 @@ console.log(client.sessionId, "sent", message);
 	}
   }
 
-  onLeave (client: Client, consented: boolean) {
-	delete this.state.players[client.sessionId];
-	delete this.klijenti[client.sessionId];
-	console.log(client.sessionId, "left", consented);
+  async onLeave (client: Client, consented: boolean) {
+	if (this.locked) {
+		try {
+			await this.allowReconnection(client, 10);
+		} 
+		catch (e) {
+			console.log("ingame-disconnect",e, this.state.players[client.sessionId].ime); 
+			this.state.sysmsg.message=this.state.players[client.sessionId].ime + " disconnected";
+			this.setajState(4);
+			this.clock.setInterval(() => {			
+				delete this.state.players[client.sessionId];
+				delete this.klijenti[client.sessionId];
+			},2000);
+		}
+	}else {
+		delete this.state.players[client.sessionId];
+		delete this.klijenti[client.sessionId];
+		console.log(client.sessionId, "left", consented);
+	}
   }
 
   onDispose() {
@@ -114,17 +136,27 @@ console.log(client.sessionId, "sent", message);
 				this.otvoriPapiric();
 				this.state.turn++;
 			}
+			if (noviState==4){
+				console.log("unexpected kraj");
+				noviState=3;
+			}
+			if (noviState==3){
+				this.state.stanje=3;
+			}
 		  break;
 		  case 2: //running
 		  	if (noviState==1){
-				//this.state.aktivni++;
 				this.advanceAktivni(false);
 				this.state.stanje=1;
 			}
+			if (noviState==4){//unexpected kraj
+				console.log("unexpected kraj");
+				noviState=3;
+			}
 			if (noviState==3){
+				this.state.time=this.clock.elapsedTime;
 				this.clock.clear();
 				this.state.stanje=3;
-
 			}
 		  break;
 		  case 3: //kraj
@@ -198,9 +230,9 @@ console.log(client.sessionId, "sent", message);
 	  console.log("round reset");
 	  for (let id in this.state.players) {const player: Player = this.state.players[id]; player.stanje=0; player.pogodjeni=0; player.partner=null};
 	  this.state.zadnji="";
-	  //this.state.aktivni=0;
 	  this.advanceAktivni(true);
 	  this.state.turn=0;
+	  this.state.time=0;
 	  this.clock.start();
   }
 
