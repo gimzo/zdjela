@@ -95,7 +95,11 @@ console.log(client.sessionId, "sent", message);
   async onLeave (client: Client, consented: boolean) {
 	if (this.locked) {
 		try {
+			console.log(client.sessionId,"attempting reconnect");
 			await this.allowReconnection(client, 10);
+			console.log(client.sessionId,"reconnected ok");
+			for (let x of this.clients) { if (x.sessionId==client.sessionId) client=x;}
+			this.klijenti[client.sessionId]=client;
 		} 
 		catch (e) {
 			console.log("ingame-disconnect",e, this.state.players[client.sessionId].ime); 
@@ -172,7 +176,6 @@ console.log(client.sessionId, "sent", message);
 
   shufflePaps() {
 	  console.log("shuffling paps");
-	  //console.log("Pre-shuffled", this.gPapiri);
 	  for (var i=this.gPapiri.length-1; i>0;i--) {
 		  var j=Math.floor(Math.random()*(i+1));
 		  var temp=this.gPapiri[i];
@@ -180,7 +183,6 @@ console.log(client.sessionId, "sent", message);
 		  this.gPapiri[j]=temp;
 	  }
 	  this.state.preostali=this.gPapiri.length;
-	  //console.log("Shuffled", this.gPapiri);
   }
 
   genParovi() {
@@ -218,6 +220,7 @@ console.log(client.sessionId, "sent", message);
 	  var client=this.klijenti[ak];
 	  var papiric=this.gPapiri.slice(-1)[0];
 	  this.send(client,papiric);
+	  console.log("sending new pap to",client.sessionId);
   }
   pogodiPapiric() {
 	  this.state.players[this.state.poredak[this.state.aktivni]].pogodjeni++;
