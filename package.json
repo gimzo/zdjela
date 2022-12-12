@@ -27,7 +27,7 @@
     "@types/serve-index": "^1.7.30",
     "colyseus": "^0.12.0",
     "cors": "^2.8.5",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "express-jwt": "^6.0.0",
     "serve-index": "^1.8.0"
   }
